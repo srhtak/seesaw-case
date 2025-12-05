@@ -13,6 +13,7 @@ const state = {
 function addWeight(position) {
     const weight = Math.floor(Math.random() * 10) + 1;
     state.weights.push({ weight, position });
+    calculateAngle();
     updateDashboard();
 }
 
@@ -37,7 +38,21 @@ function updateDashboard() {
 
 function reset() {
     state.weights = [];
+    state.angle = 0;
     updateDashboard();
+}
+
+function calculateAngle() {
+    const leftTorque = state.weights
+        .filter(w => w.position < 0)
+        .reduce((acc, w) => acc + (w.weight * Math.abs(w.position)), 0);
+
+    const rightTorque = state.weights
+        .filter(w => w.position > 0)
+        .reduce((acc, w) => acc + (w.weight * w.position), 0);
+
+    state.angle = Math.max(-30, Math.min(30, (rightTorque - leftTorque) / 10));
+    state.angle = Math.round(state.angle);
 }
 
 plank.addEventListener('click', function(e) {
