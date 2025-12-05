@@ -16,6 +16,7 @@ function addWeight(position) {
     calculateAngle();
     updateWeights();
     updateDashboard();
+    saveState();
 }
 
 function updateWeights() {
@@ -57,6 +58,7 @@ function reset() {
     state.angle = 0;
     updateWeights();
     updateDashboard();
+    saveState();
 }
 
 function calculateAngle() {
@@ -72,6 +74,23 @@ function calculateAngle() {
     state.angle = Math.round(state.angle);
 }
 
+function saveState() {
+    localStorage.setItem('seesawState', JSON.stringify(state));
+}
+
+function loadState() {
+    const saved = localStorage.getItem('seesawState');
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.weights && Array.isArray(parsed.weights)) {
+            state.weights = parsed.weights;
+            state.angle = parsed.angle || 0;
+            updateWeights();
+            updateDashboard();
+        }
+    }
+}
+
 plank.addEventListener('click', function(e) {
     const plankRect = plank.getBoundingClientRect();
     const plankCenter = plankRect.width / 2;
@@ -81,3 +100,5 @@ plank.addEventListener('click', function(e) {
 });
 
 resetBtn.addEventListener('click', reset);
+
+loadState();
