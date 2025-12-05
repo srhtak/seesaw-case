@@ -14,7 +14,21 @@ function addWeight(position) {
     const weight = Math.floor(Math.random() * 10) + 1;
     state.weights.push({ weight, position });
     calculateAngle();
+    updateWeights();
     updateDashboard();
+}
+
+function updateWeights() {
+    const existingWeights = plank.querySelectorAll('.seesaw__weight');
+    existingWeights.forEach(el => el.remove());
+
+    state.weights.forEach(w => {
+        const weightEl = document.createElement('div');
+        weightEl.className = 'seesaw__weight';
+        weightEl.textContent = w.weight;
+        weightEl.style.left = `calc(50% + ${w.position}px)`;
+        plank.appendChild(weightEl);
+    });
 }
 
 function removeWeight(index) {
@@ -39,6 +53,7 @@ function updateDashboard() {
 function reset() {
     state.weights = [];
     state.angle = 0;
+    updateWeights();
     updateDashboard();
 }
 
