@@ -39,3 +39,13 @@ function reset() {
     state.weights = [];
     updateDashboard();
 }
+
+plank.addEventListener('click', function(e) {
+    const plankRect = plank.getBoundingClientRect();
+    const plankCenter = plankRect.width / 2;
+    const clickX = e.clientX - plankRect.left;
+    const position = clickX - plankCenter;
+    addWeight(position);
+});
+
+resetBtn.addEventListener('click', reset);
