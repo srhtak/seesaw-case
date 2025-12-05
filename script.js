@@ -2,12 +2,12 @@ const plank = document.getElementById('plank');
 const dropZone = document.getElementById('drop-zone');
 const seesawContainer = document.querySelector('.seesaw');
 const pivot = document.querySelector('.seesaw__pivot');
-const leftTotalEl = document.getElementById('left-total');
-const rightTotalEl = document.getElementById('right-total');
-const angleDisplayEl = document.getElementById('angle-display');
-const resetBtn = document.getElementById('reset-btn');
-const undoBtn = document.getElementById('undo-btn');
-const lastWeightEl = document.getElementById('last-weight');
+const leftTotal = document.getElementById('left-total');
+const rightTotal = document.getElementById('right-total');
+const angleDisplay = document.getElementById('angle-display');
+const resetButton = document.getElementById('reset-btn');
+const undoButton = document.getElementById('undo-btn');
+const lastWeight = document.getElementById('last-weight');
 const logList = document.getElementById('log-list');
 
 const state = {
@@ -16,7 +16,7 @@ const state = {
     nextWeight: Math.floor(Math.random() * 10) + 1
 };
 
-let previewEl = null;
+let preview = null;
 let projectionLine = null;
 let positionLabel = null;
 
@@ -61,7 +61,7 @@ function addWeight(position) {
     seesawContainer.appendChild(fallingWeight);
 
     const side = position < 0 ? 'L' : 'R';
-    lastWeightEl.textContent = `${weight}kg @ ${Math.round(position)}px (${side})`;
+    lastWeight.textContent = `${weight}kg @ ${Math.round(position)}px (${side})`;
 
     generateNextWeight();
 
@@ -107,9 +107,9 @@ function updateDashboard() {
         .filter(w => w.position > 0)
         .reduce((acc, w) => acc + w.weight, 0);
 
-    leftTotalEl.textContent = leftTotal;
-    rightTotalEl.textContent = rightTotal;
-    angleDisplayEl.textContent = state.angle;
+    leftTotal.textContent = leftTotal;
+    rightTotal.textContent = rightTotal;
+    angleDisplay.textContent = state.angle;
 
     plank.style.transform = `rotate(${state.angle}deg)`;
 }
@@ -135,13 +135,13 @@ function undo() {
     updateUndoButton();
     saveState();
 
-    lastWeightEl.textContent = state.weights.length > 0
+    lastWeight.textContent = state.weights.length > 0
         ? `${state.weights[state.weights.length - 1].weight}kg`
         : '-';
 }
 
 function updateUndoButton() {
-    undoBtn.disabled = state.weights.length === 0;
+    undoButton.disabled = state.weights.length === 0;
 }
 
 function updateLog() {
@@ -246,13 +246,13 @@ plank.addEventListener('click', function(e) {
     addWeight(position);
 });
 
-resetBtn.addEventListener('click', reset);
-undoBtn.addEventListener('click', undo);
+resetButton.addEventListener('click', reset);
+undoButton.addEventListener('click', undo);
 
 function createPreview() {
-    previewEl = document.createElement('div');
-    previewEl.className = 'seesaw__weight seesaw__weight--preview';
-    dropZone.appendChild(previewEl);
+    preview = document.createElement('div');
+    preview.className = 'seesaw__weight seesaw__weight--preview';
+    dropZone.appendChild(preview);
 
     projectionLine = document.createElement('div');
     projectionLine.className = 'seesaw__projection-line';
@@ -266,24 +266,24 @@ function createPreview() {
 }
 
 function updatePreview() {
-    if (!previewEl) return;
+    if (!preview) return;
     const size = getWeightSize(state.nextWeight);
-    previewEl.textContent = state.nextWeight;
-    previewEl.style.width = `${size}px`;
-    previewEl.style.height = `${size}px`;
+    preview.textContent = state.nextWeight;
+    preview.style.width = `${size}px`;
+    preview.style.height = `${size}px`;
 }
 
 function showPreview(x, y, position) {
-    if (!previewEl) return;
+    if (!preview) return;
 
     const size = getWeightSize(state.nextWeight);
     const previewY = y + 25;
     const zoneHeight = dropZone.offsetHeight;
     const lineHeight = zoneHeight - previewY - (size / 2);
 
-    previewEl.style.left = `${x}px`;
-    previewEl.style.top = `${previewY}px`;
-    previewEl.style.display = 'flex';
+    preview.style.left = `${x}px`;
+    preview.style.top = `${previewY}px`;
+    preview.style.display = 'flex';
 
     projectionLine.style.left = `${x}px`;
     projectionLine.style.top = `${previewY + (size / 2)}px`;
@@ -298,8 +298,8 @@ function showPreview(x, y, position) {
 }
 
 function hidePreview() {
-    if (!previewEl) return;
-    previewEl.style.display = 'none';
+    if (!preview) return;
+    preview.style.display = 'none';
     projectionLine.style.display = 'none';
     positionLabel.style.display = 'none';
 }
