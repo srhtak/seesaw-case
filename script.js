@@ -6,7 +6,9 @@ const leftTotalEl = document.getElementById('left-total');
 const rightTotalEl = document.getElementById('right-total');
 const angleDisplayEl = document.getElementById('angle-display');
 const resetBtn = document.getElementById('reset-btn');
+const undoBtn = document.getElementById('undo-btn');
 const lastWeightEl = document.getElementById('last-weight');
+const logList = document.getElementById('log-list');
 
 const state = {
     weights: [],
@@ -31,9 +33,23 @@ function addWeight(position) {
     const weight = state.nextWeight;
     const size = getWeightSize(weight);
 
-    // Plank top: 60px, weight bottom 10px above plank bottom (70px)
-    // Weight top = 60 - size (plank bottom - 10 - size = 70 - 10 - size = 60 - size)
-    const endTop = 60 - size + 10; // +10 küçük ayarlama
+    const tempWeights = [...state.weights, { weight, position }];
+    const leftTorque = tempWeights
+        .filter(w => w.position < 0)
+        .reduce((acc, w) => acc + (w.weight * Math.abs(w.position)), 0);
+    const rightTorque = tempWeights
+        .filter(w => w.position > 0)
+        .reduce((acc, w) => acc + (w.weight * w.position), 0);
+    const newAngle = Math.max(-30, Math.min(30, (rightTorque - leftTorque) / 10));
+
+    const angleRad = newAngle * Math.PI / 180;
+    const yOffset = position * Math.sin(angleRad);
+
+    // Plank pozisyonunu dinamik al
+    const plankTop = plank.offsetTop || 60;
+    const plankHeight = plank.offsetHeight || 10;
+    const baseTop = plankTop + (plankHeight / 2) - (size / 2);
+    const endTop = baseTop + yOffset;
 
     const fallingWeight = document.createElement('div');
     fallingWeight.className = 'seesaw__weight seesaw__weight--falling';
@@ -55,8 +71,10 @@ function addWeight(position) {
         calculateAngle();
         updateWeights();
         updateDashboard();
+        updateLog();
+        updateUndoButton();
         saveState();
-    }, 600);
+    }, 400);
 }
 
 function updateWeights() {
@@ -101,7 +119,49 @@ function reset() {
     state.angle = 0;
     updateWeights();
     updateDashboard();
+    updateLog();
+    updateUndoButton();
     saveState();
+}
+
+function undo() {
+    if (state.weights.length === 0) return;
+
+    state.weights.pop();
+    calculateAngle();
+    updateWeights();
+    updateDashboard();
+    updateLog();
+    updateUndoButton();
+    saveState();
+
+    lastWeightEl.textContent = state.weights.length > 0
+        ? `${state.weights[state.weights.length - 1].weight}kg`
+        : '-';
+}
+
+function updateUndoButton() {
+    undoBtn.disabled = state.weights.length === 0;
+}
+
+function updateLog() {
+    if (state.weights.length === 0) {
+        logList.innerHTML = '<div class="log__empty">No weights added yet</div>';
+        return;
+    }
+
+    logList.innerHTML = state.weights.map((w, index) => {
+        const side = w.position < 0 ? 'left' : 'right';
+        const sideLabel = w.position < 0 ? 'LEFT' : 'RIGHT';
+        return `
+            <div class="log__item log__item--${side}">
+                <span class="log__item-info">
+                    #${index + 1} • ${w.weight}kg @ ${Math.round(w.position)}px
+                </span>
+                <span class="log__item-side">${sideLabel}</span>
+            </div>
+        `;
+    }).reverse().join('');
 }
 
 function calculateAngle() {
@@ -132,10 +192,27 @@ function loadState() {
             updateDashboard();
         }
     }
+    updateLog();
+    updateUndoButton();
+}
+
+function isMobile() {
+    return window.innerWidth <= 768;
 }
 
 function renderScale() {
-    const tickPositions = [-250, -200, -150, -100, -50, 0, 50, 100, 150, 200, 250];
+    if (!isMobile()) return;
+
+    plank.querySelectorAll('.seesaw__tick, .seesaw__tick-label').forEach(el => el.remove());
+
+    const plankWidth = plank.offsetWidth || 320;
+    const halfWidth = plankWidth / 2;
+    const step = Math.round(halfWidth / 5);
+
+    const tickPositions = [];
+    for (let i = -5; i <= 5; i++) {
+        tickPositions.push(i * step);
+    }
 
     tickPositions.forEach(pos => {
         const tick = document.createElement('div');
@@ -150,6 +227,8 @@ function renderScale() {
         plank.appendChild(label);
     });
 }
+
+window.addEventListener('resize', renderScale);
 
 dropZone.addEventListener('click', function(e) {
     const zoneRect = dropZone.getBoundingClientRect();
@@ -168,6 +247,7 @@ plank.addEventListener('click', function(e) {
 });
 
 resetBtn.addEventListener('click', reset);
+undoBtn.addEventListener('click', undo);
 
 function createPreview() {
     previewEl = document.createElement('div');
