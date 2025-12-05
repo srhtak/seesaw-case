@@ -48,6 +48,8 @@ function updateDashboard() {
     leftTotalEl.textContent = leftTotal;
     rightTotalEl.textContent = rightTotal;
     angleDisplayEl.textContent = state.angle;
+
+    plank.style.transform = `rotate(${state.angle}deg)`;
 }
 
 function reset() {
