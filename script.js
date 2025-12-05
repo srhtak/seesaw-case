@@ -1,13 +1,12 @@
 const plank = document.getElementById('plank');
 const dropZone = document.getElementById('drop-zone');
+const seesawContainer = document.querySelector('.seesaw');
 const pivot = document.querySelector('.seesaw__pivot');
 const leftTotalEl = document.getElementById('left-total');
 const rightTotalEl = document.getElementById('right-total');
 const angleDisplayEl = document.getElementById('angle-display');
 const resetBtn = document.getElementById('reset-btn');
 const lastWeightEl = document.getElementById('last-weight');
-const mouseTracker = document.getElementById('mouse-tracker');
-const mousePositionEl = document.getElementById('mouse-position');
 
 const state = {
     weights: [],
@@ -16,6 +15,8 @@ const state = {
 };
 
 let previewEl = null;
+let projectionLine = null;
+let positionLabel = null;
 
 function getWeightSize(weight) {
     return 24 + (weight - 1) * 2;
@@ -30,13 +31,18 @@ function addWeight(position) {
     const weight = state.nextWeight;
     const size = getWeightSize(weight);
 
+    // Plank top: 60px, weight bottom 10px above plank bottom (70px)
+    // Weight top = 60 - size (plank bottom - 10 - size = 70 - 10 - size = 60 - size)
+    const endTop = 60 - size + 10; // +10 küçük ayarlama
+
     const fallingWeight = document.createElement('div');
     fallingWeight.className = 'seesaw__weight seesaw__weight--falling';
     fallingWeight.textContent = weight;
     fallingWeight.style.left = `calc(50% + ${position}px)`;
     fallingWeight.style.width = `${size}px`;
     fallingWeight.style.height = `${size}px`;
-    plank.appendChild(fallingWeight);
+    fallingWeight.style.setProperty('--end-top', `${endTop}px`);
+    seesawContainer.appendChild(fallingWeight);
 
     const side = position < 0 ? 'L' : 'R';
     lastWeightEl.textContent = `${weight}kg @ ${Math.round(position)}px (${side})`;
@@ -167,6 +173,15 @@ function createPreview() {
     previewEl = document.createElement('div');
     previewEl.className = 'seesaw__weight seesaw__weight--preview';
     dropZone.appendChild(previewEl);
+
+    projectionLine = document.createElement('div');
+    projectionLine.className = 'seesaw__projection-line';
+    dropZone.appendChild(projectionLine);
+
+    positionLabel = document.createElement('div');
+    positionLabel.className = 'seesaw__position-label';
+    dropZone.appendChild(positionLabel);
+
     updatePreview();
 }
 
@@ -178,34 +193,48 @@ function updatePreview() {
     previewEl.style.height = `${size}px`;
 }
 
-function showPreview(x) {
+function showPreview(x, y, position) {
     if (!previewEl) return;
+
+    const size = getWeightSize(state.nextWeight);
+    const previewY = y + 25;
+    const zoneHeight = dropZone.offsetHeight;
+    const lineHeight = zoneHeight - previewY - (size / 2);
+
     previewEl.style.left = `${x}px`;
+    previewEl.style.top = `${previewY}px`;
     previewEl.style.display = 'flex';
+
+    projectionLine.style.left = `${x}px`;
+    projectionLine.style.top = `${previewY + (size / 2)}px`;
+    projectionLine.style.height = `${lineHeight}px`;
+    projectionLine.style.display = 'block';
+
+    const side = position < 0 ? 'L' : position > 0 ? 'R' : '•';
+    positionLabel.textContent = `${position} (${side})`;
+    positionLabel.style.left = `${x + 20}px`;
+    positionLabel.style.top = `${zoneHeight - 30}px`;
+    positionLabel.style.display = 'block';
 }
 
 function hidePreview() {
     if (!previewEl) return;
     previewEl.style.display = 'none';
+    projectionLine.style.display = 'none';
+    positionLabel.style.display = 'none';
 }
 
-// Mouse tracking - drop zone
 dropZone.addEventListener('mousemove', function(e) {
     const zoneRect = dropZone.getBoundingClientRect();
     const zoneCenter = zoneRect.width / 2;
     const mouseX = e.clientX - zoneRect.left;
+    const mouseY = e.clientY - zoneRect.top;
     const position = Math.round(mouseX - zoneCenter);
-    const side = position < 0 ? 'LEFT' : position > 0 ? 'RIGHT' : 'CENTER';
 
-    mousePositionEl.textContent = `${position}px (${side}) - Next: ${state.nextWeight}kg`;
-    mouseTracker.classList.add('mouse-tracker--visible');
-
-    showPreview(mouseX);
+    showPreview(mouseX, mouseY, position);
 });
 
 dropZone.addEventListener('mouseleave', function() {
-    mouseTracker.classList.remove('mouse-tracker--visible');
-    mousePositionEl.textContent = '-';
     hidePreview();
 });
 
