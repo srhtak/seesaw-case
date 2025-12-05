@@ -1,9 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Serhat</title>
-  </head>
-  <body></body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seesaw Simulation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="app">
+
+        <section class="dashboard">
+            <div class="dashboard__stat">
+                Left Weight: <span id="left-total" class="dashboard__value">0</span> kg
+            </div>
+            <div class="dashboard__stat">
+                Right Weight: <span id="right-total" class="dashboard__value">0</span> kg
+            </div>
+            <div class="dashboard__stat">
+                Angle: <span id="angle-display" class="dashboard__value">0</span>°
+            </div>
+        </section>
+
+        <section class="simulation">
+            <div class="seesaw">
+                <div id="plank" class="seesaw__plank">
+                    </div>
+
+                <div class="seesaw__pivot"></div>
+            </div>
+        </section>
+
+        <div class="controls">
+            <button id="reset-btn" class="button button--danger">Reset</button>
+        </div>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
 </html>
