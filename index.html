@@ -12,18 +12,26 @@
 
         <section class="dashboard">
             <div class="dashboard__stat">
-                Left Weight: <span id="left-total" class="dashboard__value">0</span> kg
+                Left: <span id="left-total" class="dashboard__value">0</span> kg
             </div>
             <div class="dashboard__stat">
-                Right Weight: <span id="right-total" class="dashboard__value">0</span> kg
+                Right: <span id="right-total" class="dashboard__value">0</span> kg
             </div>
             <div class="dashboard__stat">
                 Angle: <span id="angle-display" class="dashboard__value">0</span>°
             </div>
+            <div class="dashboard__stat">
+                Last: <span id="last-weight" class="dashboard__value">-</span>
+            </div>
         </section>
+
+        <div class="mouse-tracker" id="mouse-tracker">
+            Position: <span id="mouse-position">-</span>
+        </div>
 
         <section class="simulation">
             <div class="seesaw">
+                <div id="drop-zone" class="seesaw__drop-zone"></div>
                 <div id="plank" class="seesaw__plank">
                     </div>
 

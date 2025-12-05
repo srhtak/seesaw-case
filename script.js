@@ -1,33 +1,70 @@
 const plank = document.getElementById('plank');
+const dropZone = document.getElementById('drop-zone');
 const pivot = document.querySelector('.seesaw__pivot');
 const leftTotalEl = document.getElementById('left-total');
 const rightTotalEl = document.getElementById('right-total');
 const angleDisplayEl = document.getElementById('angle-display');
 const resetBtn = document.getElementById('reset-btn');
+const lastWeightEl = document.getElementById('last-weight');
+const mouseTracker = document.getElementById('mouse-tracker');
+const mousePositionEl = document.getElementById('mouse-position');
 
 const state = {
     weights: [],
-    angle: 0
+    angle: 0,
+    nextWeight: Math.floor(Math.random() * 10) + 1
 };
 
+let previewEl = null;
+
+function getWeightSize(weight) {
+    return 24 + (weight - 1) * 2;
+}
+
+function generateNextWeight() {
+    state.nextWeight = Math.floor(Math.random() * 10) + 1;
+    updatePreview();
+}
+
 function addWeight(position) {
-    const weight = Math.floor(Math.random() * 10) + 1;
-    state.weights.push({ weight, position });
-    calculateAngle();
-    updateWeights();
-    updateDashboard();
-    saveState();
+    const weight = state.nextWeight;
+    const size = getWeightSize(weight);
+
+    const fallingWeight = document.createElement('div');
+    fallingWeight.className = 'seesaw__weight seesaw__weight--falling';
+    fallingWeight.textContent = weight;
+    fallingWeight.style.left = `calc(50% + ${position}px)`;
+    fallingWeight.style.width = `${size}px`;
+    fallingWeight.style.height = `${size}px`;
+    plank.appendChild(fallingWeight);
+
+    const side = position < 0 ? 'L' : 'R';
+    lastWeightEl.textContent = `${weight}kg @ ${Math.round(position)}px (${side})`;
+
+    generateNextWeight();
+
+    setTimeout(() => {
+        fallingWeight.remove();
+        state.weights.push({ weight, position });
+        calculateAngle();
+        updateWeights();
+        updateDashboard();
+        saveState();
+    }, 600);
 }
 
 function updateWeights() {
-    const existingWeights = plank.querySelectorAll('.seesaw__weight');
+    const existingWeights = plank.querySelectorAll('.seesaw__weight:not(.seesaw__weight--preview)');
     existingWeights.forEach(el => el.remove());
 
     state.weights.forEach(w => {
+        const size = getWeightSize(w.weight);
         const weightEl = document.createElement('div');
         weightEl.className = 'seesaw__weight';
         weightEl.textContent = w.weight;
         weightEl.style.left = `calc(50% + ${w.position}px)`;
+        weightEl.style.width = `${size}px`;
+        weightEl.style.height = `${size}px`;
         plank.appendChild(weightEl);
     });
 }
@@ -91,6 +128,31 @@ function loadState() {
     }
 }
 
+function renderScale() {
+    const tickPositions = [-250, -200, -150, -100, -50, 0, 50, 100, 150, 200, 250];
+
+    tickPositions.forEach(pos => {
+        const tick = document.createElement('div');
+        tick.className = pos === 0 ? 'seesaw__tick seesaw__tick--center' : 'seesaw__tick';
+        tick.style.left = `calc(50% + ${pos}px)`;
+        plank.appendChild(tick);
+
+        const label = document.createElement('div');
+        label.className = 'seesaw__tick-label';
+        label.textContent = pos;
+        label.style.left = `calc(50% + ${pos}px)`;
+        plank.appendChild(label);
+    });
+}
+
+dropZone.addEventListener('click', function(e) {
+    const zoneRect = dropZone.getBoundingClientRect();
+    const zoneCenter = zoneRect.width / 2;
+    const clickX = e.clientX - zoneRect.left;
+    const position = clickX - zoneCenter;
+    addWeight(position);
+});
+
 plank.addEventListener('click', function(e) {
     const plankRect = plank.getBoundingClientRect();
     const plankCenter = plankRect.width / 2;
@@ -101,4 +163,52 @@ plank.addEventListener('click', function(e) {
 
 resetBtn.addEventListener('click', reset);
 
+function createPreview() {
+    previewEl = document.createElement('div');
+    previewEl.className = 'seesaw__weight seesaw__weight--preview';
+    dropZone.appendChild(previewEl);
+    updatePreview();
+}
+
+function updatePreview() {
+    if (!previewEl) return;
+    const size = getWeightSize(state.nextWeight);
+    previewEl.textContent = state.nextWeight;
+    previewEl.style.width = `${size}px`;
+    previewEl.style.height = `${size}px`;
+}
+
+function showPreview(x) {
+    if (!previewEl) return;
+    previewEl.style.left = `${x}px`;
+    previewEl.style.display = 'flex';
+}
+
+function hidePreview() {
+    if (!previewEl) return;
+    previewEl.style.display = 'none';
+}
+
+// Mouse tracking - drop zone
+dropZone.addEventListener('mousemove', function(e) {
+    const zoneRect = dropZone.getBoundingClientRect();
+    const zoneCenter = zoneRect.width / 2;
+    const mouseX = e.clientX - zoneRect.left;
+    const position = Math.round(mouseX - zoneCenter);
+    const side = position < 0 ? 'LEFT' : position > 0 ? 'RIGHT' : 'CENTER';
+
+    mousePositionEl.textContent = `${position}px (${side}) - Next: ${state.nextWeight}kg`;
+    mouseTracker.classList.add('mouse-tracker--visible');
+
+    showPreview(mouseX);
+});
+
+dropZone.addEventListener('mouseleave', function() {
+    mouseTracker.classList.remove('mouse-tracker--visible');
+    mousePositionEl.textContent = '-';
+    hidePreview();
+});
+
+renderScale();
+createPreview();
 loadState();
